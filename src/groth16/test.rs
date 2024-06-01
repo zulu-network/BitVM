@@ -10,6 +10,8 @@ use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisE
 use ark_std::{end_timer, start_timer, test_rng, UniformRand};
 use rand::{RngCore, SeedableRng};
 
+type GrothBn = Groth16<Bn254>;
+
 #[derive(Copy)]
 struct DummyCircuit<F: PrimeField> {
     pub a: Option<F>,
@@ -174,6 +176,13 @@ fn test_mohammed_proof() {
     println!("vk = {:?}", vk);
     println!("input = {:?}", input);
 
+    // check if proof can be verified by ark groth16 impl
+    let pvk = GrothBn::process_vk(&vk).unwrap();
+    let res = GrothBn::verify_proof(&pvk, &proof, &vec![input.into()]);
+
+    println!("ark groth16 results = {:?}", res);
+
+    // check if we can generate BitVM script to verify the proof
     let start = start_timer!(|| "collect_script");
     let script = Verifier::verify_proof(&vec![input.into()], &proof, &vk);
     end_timer!(start);
