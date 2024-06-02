@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::execute_script_without_stack_limit;
 use crate::groth16::verifier::Verifier;
 use ark_bn254::{Bn254, Fq, Fr, G1Affine, G2Affine};
@@ -171,6 +172,214 @@ fn test_mohammed_proof() {
     };
 
     let input = BigInt!("33");
+
+    println!("proof = {:?}", proof);
+    println!("vk = {:?}", vk);
+    println!("input = {:?}", input);
+
+    // check if proof can be verified by ark groth16 impl
+    let pvk = GrothBn::process_vk(&vk).unwrap();
+    let res = GrothBn::verify_proof(&pvk, &proof, &vec![input.into()]);
+
+    println!("ark groth16 results = {:?}", res);
+
+    // check if we can generate BitVM script to verify the proof
+    let start = start_timer!(|| "collect_script");
+    let script = Verifier::verify_proof(&vec![input.into()], &proof, &vk);
+    end_timer!(start);
+
+    println!("groth16::test_verify_proof = {} bytes", script.len());
+
+    let start = start_timer!(|| "execute_script");
+    let exec_result = execute_script_without_stack_limit(script);
+    end_timer!(start);
+
+    assert!(exec_result.success);
+}
+
+#[test]
+fn test_rishad_proof() {
+    let vk_alpha_1 = ark_bn254::g1::G1Affine::new(
+        ark_bn254::Fq::from_str(
+            "6117161126869844602433309546171448151728322744770508753131753885499045584910"
+
+        )
+            .unwrap(),
+        ark_bn254::Fq::from_str(
+            "14094591427337233361517874993193192576380631523030133273864329413726582651396",
+
+        )
+            .unwrap(),
+    );
+
+    let vk_beta_2 = ark_bn254::g2::G2Affine::new(
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "2196118445051556366762974676611694877770013932149201158636884163904232026419",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "20188916084677717486210667975380442292135287321570640639117832202316406611766",
+            )
+                .unwrap(),
+        ),
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "6219097247874945471057604403082378217403045075369208448653205188466991084678",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "19116720981538924756160971362898603981603248659906733928224157658350075553174",
+            )
+                .unwrap(),
+        ),
+    );
+
+    let vk_gamma_2 = ark_bn254::g2::G2Affine::new(
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "10857046999023057135944570762232829481370756359578518086990519993285655852781",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "11559732032986387107991004021392285783925812861821192530917403151452391805634",
+            )
+                .unwrap(),
+        ),
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "8495653923123431417604973247489272438418190587263600148770280649306958101930",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "4082367875863433681332203403145435568316851327593401208105741076214120093531",
+            )
+                .unwrap(),
+        ),
+    );
+
+    let vk_delta_2 = ark_bn254::g2::G2Affine::new(
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "4279361241050987752773044269594322063306682737082321143398405699129237855942",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "2239524892479967091376735279251979480320868482462553350996564175792945032601",
+            )
+                .unwrap(),
+        ),
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "488828002969512743004233270714777829102645307230634298858004435112498084084",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "5666585573668191691251981802920273910764760462839300932162921559575577560205",
+            )
+                .unwrap(),
+        ),
+    );
+
+    let vk_gamma_abc_g1 = vec![
+        ark_bn254::g1::G1Affine::new(
+            ark_bn254::Fq::from_str(
+                "18107078568358861072193329934401315958760377816251221601556357870168457683799",
+
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "11747474458298507931679714775866025354784923347745041191658622789291179179947",
+
+            )
+                .unwrap(),
+        ),
+        ark_bn254::g1::G1Affine::new(
+            ark_bn254::Fq::from_str(
+                "5723939095321321613644183176922328255546273440621501602624620721463955726363",
+
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "19741991047391808050801890133934484120959869766680493739569202558586929389690",
+
+            )
+                .unwrap(),
+        ),
+
+    ];
+
+    let vk = VerifyingKey::<Bn254> {
+        alpha_g1: vk_alpha_1,
+        beta_g2: vk_beta_2,
+        gamma_g2: vk_gamma_2,
+        delta_g2: vk_delta_2,
+        gamma_abc_g1: vk_gamma_abc_g1,
+    };
+
+    let proof_a = ark_bn254::g1::G1Affine::new(
+        ark_bn254::Fq::from_str(
+            "9452838137743868523156566189115119760665101005991904016208173887439870880826",
+
+        )
+            .unwrap(),
+        ark_bn254::Fq::from_str(
+            "10935593900996493977023848439516617064945999693134288948968487647567701541534",
+
+        )
+            .unwrap(),
+    );
+//     [
+//    "4719365549116382227310392094380522362917775903846431113815784289288722371775",
+//    "10047828437309712194128897983444199418946364783703893131758124056513998765757"
+//   ],
+//   [
+//    "8569669060837162354392974680693437412536243982033236575527457416831468333430",
+//    "19853465112472850009478873738010218875622574796131059267126883764321082049711"
+//   ],
+    let proof_b = ark_bn254::g2::G2Affine::new(
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "4719365549116382227310392094380522362917775903846431113815784289288722371775",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "10047828437309712194128897983444199418946364783703893131758124056513998765757",
+            )
+                .unwrap(),
+        ),
+        ark_bn254::Fq2::new(
+            ark_bn254::Fq::from_str(
+                "8569669060837162354392974680693437412536243982033236575527457416831468333430",
+            )
+                .unwrap(),
+            ark_bn254::Fq::from_str(
+                "19853465112472850009478873738010218875622574796131059267126883764321082049711",
+            )
+                .unwrap(),
+        ),
+    );
+
+    let proof_c = ark_bn254::g1::G1Affine::new(
+        ark_bn254::Fq::from_str(
+            "3776782603344042337972963925541569906672604958517588728895169517488255098773",
+
+        )
+            .unwrap(),
+        ark_bn254::Fq::from_str(
+            "8165252629705596068413729171943750651707329067969726093163811882149935738467",
+
+        )
+            .unwrap(),
+    );
+    let proof = Proof::<Bn254>{
+        a: proof_a,
+        b: proof_b,
+        c: proof_c,
+    };
+    let input = ark_bn254::Fr::from_str(
+        "33",
+    ).unwrap();
 
     println!("proof = {:?}", proof);
     println!("vk = {:?}", vk);
