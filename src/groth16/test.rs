@@ -198,7 +198,7 @@ fn test_mohammed_proof() {
 }
 
 #[test]
-fn test_rishad_proof() {
+fn test_rishabh_proof() {
     let vk_alpha_1 = ark_bn254::g1::G1Affine::new(
         ark_bn254::Fq::from_str(
             "6117161126869844602433309546171448151728322744770508753131753885499045584910"
